@@ -1,0 +1,67 @@
+name: Pubblica su GitHub Pages
+
+# Si avvia a ogni push su main e può essere lanciato a mano da Actions → "Run workflow".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permessi minimi necessari per pubblicare su Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Una sola pubblicazione alla volta; una più recente sostituisce quella in coda.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Controlli e build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v7
+
+      - name: Installa Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Installa le dipendenze (riproducibile, da package-lock.json)
+        run: npm ci
+
+      - name: Controlla asset e percorsi
+        run: npm run check:assets
+
+      - name: Esegui i test
+        run: npm test
+
+      - name: Build di produzione
+        run: npm run build
+
+      - name: Verifica che la build sia stata generata
+        run: test -f dist/index.html && test -d dist/assets
+
+      - name: Configura Pages
+        uses: actions/configure-pages@v6
+
+      - name: Prepara l'artefatto (solo la cartella dist, mai il codice sorgente)
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    name: Pubblica
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Pubblica su GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

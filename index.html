@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2a1a5e" />
+    <meta name="description" content="Carlotta's Gift Run: una corsa a tre corsie, tanti pacchi e un regalo finale tutto per te." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Carlotta's Gift Run</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="game" aria-hidden="true"></div>
+      <div id="ui" aria-live="off"></div>
+      <div id="loading" role="status">
+        <div class="loading-box"><span class="loading-gift"></span><span class="loading-text">Sto impacchettando le sorprese…</span>
+          <span class="loading-bar"><i id="loading-fill"></i></span></div>
+      </div>
+      <noscript><p class="noscript">Per giocare a Carlotta's Gift Run serve JavaScript attivo nel browser.</p></noscript>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
