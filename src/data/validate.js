@@ -32,7 +32,7 @@ function setPath(obj, path, value) {
 
 /** Intervalli ammessi per i numeri di configurazione: [percorso, min, max]. */
 const NUMBER_RULES = [
-  ['run.targetDurationSec', 30, 600],
+  ['run.targetDurationSec', 10, 600],
   ['run.startSpeed', 3, 30],
   ['run.maxSpeed', 3, 40],
   ['run.maxSpeedAtProgress', 0.2, 1],

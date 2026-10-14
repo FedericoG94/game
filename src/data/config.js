@@ -60,8 +60,8 @@ export const config = {
   // PERCORSO E VELOCITÀ
   // ------------------------------------------------------------------
   run: {
-    /** Durata teorica della corsa senza rallentamenti (la lunghezza del percorso ne deriva). */
-    targetDurationSec: 120,
+    /** Durata teorica della corsa senza rallentamenti (tutto il gioco, finale incluso, resta sotto i 30 s) (la lunghezza del percorso ne deriva). */
+    targetDurationSec: 18,
     startSpeed: 9,
     maxSpeed: 16.5,
     /** Frazione del percorso a cui la velocità raggiunge il massimo. */
@@ -102,9 +102,9 @@ export const config = {
   spawn: {
     /** Distanza (m) a cui gli oggetti compaiono all'orizzonte. */
     spawnDistance: 62,
-    firstRowAt: 30,
+    firstRowAt: 18,
     /** Metri completamente liberi prima del traguardo. */
-    clearBeforeGate: 22,
+    clearBeforeGate: 16,
     /** Secondi di corsa tra due file di oggetti: da inizio a fine percorso. */
     rowIntervalSec: { start: 1.6, end: 0.98 },
     /** Mai meno di questo tra due file (garantisce che ogni schema sia superabile). */

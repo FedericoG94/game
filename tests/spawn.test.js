@@ -34,7 +34,7 @@ function generateTrack(seed, spawnOverride = {}) {
 describe('SpawnManager', () => {
   it('genera file ordinate lungo tutto il percorso e lascia libero il tratto finale', () => {
     const { rows, state } = generateTrack(1);
-    expect(rows.length).toBeGreaterThan(40);
+    expect(rows.length).toBeGreaterThan(6);
     expect(rows[0].pos).toBeGreaterThanOrEqual(settings.spawn.firstRowAt);
     expect(rows.at(-1).pos).toBeLessThanOrEqual(state.trackLength - settings.spawn.clearBeforeGate);
   });

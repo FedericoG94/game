@@ -70,11 +70,11 @@ sottopercorso come `https://utente.github.io/nome-repo/`. Per provare esattament
 
 ```bash
 npm run build
-npx vite preview --base /CompleannoCarlotta/ --port 4173
-# apri http://localhost:4173/CompleannoCarlotta/
+npx vite preview --base /game/ --port 4173
+# apri http://localhost:4173/game/
 ```
 
-> Su Windows con Git Bash, anteponi `MSYS_NO_PATHCONV=1` al comando, altrimenti `/CompleannoCarlotta/` viene trasformato in un percorso di Windows.
+> Su Windows con Git Bash, anteponi `MSYS_NO_PATHCONV=1` al comando, altrimenti `/game/` viene trasformato in un percorso di Windows.
 
 ## Come si gioca
 
@@ -263,7 +263,7 @@ Il repository è già pronto: basta abilitare Pages **una volta sola**.
 3. Il workflow `.github/workflows/deploy.yml` parte da solo a ogni push su `main` (o a mano da **Actions → Pubblica su GitHub Pages → Run workflow**). Esegue:
    `npm ci` → controllo asset → test → build → pubblica **solo la cartella `dist/`** (mai il codice sorgente). Se un passaggio fallisce, non pubblica.
 4. Quando il workflow è verde, il sito è su `https://UTENTE.github.io/NOME-REPO/`
-   (per questo repository: `https://fgelpidf.github.io/CompleannoCarlotta/`).
+   (per questo repository: `https://federicog94.github.io/game/`).
 
 Per aggiornare il gioco basta modificare i file e fare un nuovo `git push`.
 
