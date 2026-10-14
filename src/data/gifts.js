@@ -3,10 +3,13 @@
  * ------------------------------------------------------------------
  * ⚠ Tutti i contenuti qui sotto sono SEGNAPOSTO provvisori: nessuna persona
  *   reale è citata. Per personalizzare il gioco:
- *   1. copia la foto in `public/assets/gifts/positive|negative|special/`
- *      (consigliato WebP quadrato ~512×512, sotto i 150 KB);
- *   2. cambia `image`, `name`, `message` e `points` del regalo;
- *   3. per aggiungerne uno, copia un blocco e dagli un `id` univoco.
+ *   1. copia la foto in `private/gifts/positive|negative|special/` (cartella NON pubblicata;
+ *      consigliato WebP quadrato ~512×512, sotto i 150 KB);
+ *   2. cambia `image` (resta nel formato `assets/gifts/positive/nome.png`), `name`,
+ *      `message` e `points` del regalo;
+ *   3. lancia `npm run encrypt:gifts`: cifra le foto in `public/assets/enc/` con la parola
+ *      d'ordine di accesso. Committa solo quei file `.bin`, mai gli originali;
+ *   4. per aggiungere un regalo, copia un blocco e dagli un `id` univoco.
  *
  * Campi di ogni regalo:
  *   id        identificatore univoco (kebab-case)
@@ -66,8 +69,8 @@ export const gifts = [
     name: 'La banda di amici',
     category: 'persone',
     type: 'positive',
-    image: 'assets/gifts/positive/gruppo-amici-placeholder.webp',
-    message: 'Tutti insieme per te: che squadra! (foto provvisoria)',
+    image: 'assets/gifts/positive/banda_amici.png',
+    message: 'Tutti insieme per te: che squadra!',
     points: 100,
     rarity: 'common',
     weight: 8,
@@ -89,11 +92,11 @@ export const gifts = [
   },
   {
     id: 'pilota-f1',
-    name: 'Pilota di Formula 1',
+    name: 'Kimi Antonelli',
     category: 'formula1',
     type: 'positive',
-    image: 'assets/gifts/positive/pilota-f1-placeholder.webp',
-    message: 'Pole position nel tuo cuore! (foto provvisoria)',
+    image: 'assets/gifts/positive/kimi_antonelli.webp',
+    message: 'Pole position nel tuo cuore!',
     points: 120,
     rarity: 'common',
     weight: 8,

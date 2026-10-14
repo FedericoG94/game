@@ -5,6 +5,19 @@ import { adoptTexture, bakeCatalog, bakeOne } from './artBank.js';
 import { buildArtCatalog } from '../art/index.js';
 import { placeholderPortraitSvg } from '../art/placeholderPortrait.js';
 import { svgToDataUri } from '../art/svgKit.js';
+import { decryptBytes, encryptedPath } from '../crypto/vault.js';
+
+const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif' };
+const imageMime = (path) => MIME[String(path).split('.').pop().toLowerCase()] ?? 'image/png';
+
+function loadImageElement(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
 
 /**
  * Carica le immagini dei regali dai file locali e "cuoce" tutta l'arte procedurale in texture.
@@ -25,9 +38,7 @@ export class PreloadScene extends Phaser.Scene {
       this.failed.add(file.key);
       console.warn(`[Carlotta's Gift Run] Immagine non caricata: ${file.url}. Uso un segnaposto.`);
     });
-    for (const g of app.gifts) {
-      if (g.image) this.load.image(`gift-${g.id}`, assetUrl(g.image));
-    }
+    // le foto dei regali non passano da qui: sono cifrate e le apre `loadGiftImages()`
     // immagini che l'utente ha scelto al posto dell'arte procedurale (config.assets.overrides)
     for (const [key, path] of Object.entries(app.settings.assets.overrides)) this.load.image(`ovr:${key}`, assetUrl(path));
   }
@@ -44,8 +55,48 @@ export class PreloadScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Carica la foto di ogni regalo: prima la versione cifrata (`assets/enc/`), che si apre con la
+   * chiave ricavata dalla parola d'ordine; se non c'è, il file in chiaro (i segnaposto pubblici).
+   * Se nessuna delle due funziona il regalo resta senza voce in `app.giftImages` e riceve il segnaposto.
+   */
+  async loadGiftImages() {
+    const gifts = app.gifts.filter((g) => g.image);
+    let done = 0;
+    await Promise.all(
+      gifts.map(async (gift) => {
+        const url = (await this.openEncrypted(gift.image)) ?? assetUrl(gift.image);
+        const img = await loadImageElement(url);
+        if (img) {
+          const key = `gift-${gift.id}`;
+          if (this.textures.exists(key)) this.textures.remove(key);
+          this.textures.addImage(key, img);
+          app.giftImages.set(gift.id, url);
+        } else {
+          console.warn(`[Carlotta's Gift Run] Immagine non caricata: ${gift.image}. Uso un segnaposto.`);
+          if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+        }
+        this.setProgress(0.03 + (++done / gifts.length) * 0.55);
+      }),
+    );
+  }
+
+  /** Indirizzo `blob:` della foto decifrata, oppure null se manca il file cifrato o la chiave non lo apre. */
+  async openEncrypted(logicalPath) {
+    if (!app.vaultKey) return null;
+    try {
+      const res = await fetch(assetUrl(await encryptedPath(logicalPath)));
+      if (!res.ok) return null;
+      const bytes = await decryptBytes(app.vaultKey, await res.arrayBuffer());
+      return URL.createObjectURL(new Blob([bytes], { type: imageMime(logicalPath) }));
+    } catch {
+      return null; // file assente (in sviluppo il server risponde con la pagina), chiave errata o file alterato
+    }
+  }
+
   async finish() {
     const { settings } = app;
+    await this.loadGiftImages();
     const catalog = buildArtCatalog({
       character: settings.character,
       categories: app.categories,
@@ -53,6 +104,7 @@ export class PreloadScene extends Phaser.Scene {
       categoryHints: settings.gifts.categoryHints,
     });
     await bakeCatalog(this.textures, catalog, (done, total) => this.setProgress(0.6 + (done / total) * 0.35));
+    this.setProgress(0.95);
 
     for (const [key, path] of Object.entries(settings.assets.overrides)) {
       const tmp = `ovr:${key}`;
@@ -63,11 +115,7 @@ export class PreloadScene extends Phaser.Scene {
 
     for (const gift of app.gifts) {
       const key = `gift-${gift.id}`;
-      const loaded = Boolean(gift.image) && this.textures.exists(key) && !this.failed.has(key);
-      if (loaded) {
-        app.giftImages.set(gift.id, assetUrl(gift.image));
-        continue;
-      }
+      if (app.giftImages.has(gift.id)) continue; // foto reale già caricata da loadGiftImages()
       const cat = app.categories[gift.category] ?? {};
       const svg = placeholderPortraitSvg({ name: gift.name, color: cat.color, symbol: cat.symbol, type: gift.type, size: 256 });
       await bakeOne(this.textures, key, { w: 256, h: 256, svg, origin: [0.5, 0.5] }, 1);

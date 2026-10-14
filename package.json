@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "check:assets": "node scripts/check-assets.mjs",
+    "encrypt:gifts": "node scripts/encrypt-gifts.mjs",
     "make:placeholders": "node scripts/make-placeholders.mjs",
     "verify": "npm run check:assets && npm test && npm run build"
   },

@@ -31,6 +31,8 @@ export const app = {
   input: new InputController(),
   /** giftId -> sorgente dell'immagine (file locale o segnaposto generato) */
   giftImages: new Map(),
+  /** chiave AES per aprire le foto cifrate, derivata dalla parola d'ordine (impostata da boot.js) */
+  vaultKey: null,
   reducedMotion: computeReduced(),
   quality: 1,
   debug,

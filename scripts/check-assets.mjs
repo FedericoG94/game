@@ -8,16 +8,31 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gifts } from '../src/data/gifts.js';
+import { encryptedPath } from '../src/crypto/vault.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const strict = process.argv.includes('--strict');
 let errors = 0;
 let warnings = 0;
 
-// 1) immagini dei regali
+// 1) immagini dei regali (cifrate in public/assets/enc, oppure segnaposto in chiaro)
 for (const gift of gifts) {
   if (!gift.image) {
     console.warn(`avviso: il regalo "${gift.id}" non ha un'immagine (verrà usato un segnaposto)`);
+    warnings++;
+    continue;
+  }
+  const encFile = resolve(root, 'public', await encryptedPath(gift.image));
+  const original = resolve(root, 'private', gift.image.replace(/^\/?assets\//, ''));
+  if (existsSync(encFile)) {
+    if (existsSync(original) && statSync(original).mtimeMs > statSync(encFile).mtimeMs) {
+      console.warn(`avviso: private/${gift.image.replace(/^\/?assets\//, '')} è più recente della versione cifrata: rilancia npm run encrypt:gifts`);
+      warnings++;
+    }
+    continue;
+  }
+  if (existsSync(original)) {
+    console.warn(`avviso: la foto di "${gift.id}" non è ancora cifrata: lancia npm run encrypt:gifts (altrimenti compare il segnaposto)`);
     warnings++;
     continue;
   }
@@ -33,6 +48,20 @@ for (const gift of gifts) {
     }
   }
 }
+
+// 1b) in public/assets/gifts devono esserci solo i segnaposto: una foto vera in chiaro sarebbe pubblica
+function scanPlain(dir) {
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir)) {
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) scanPlain(full);
+    else if (!name.startsWith('.') && !/-placeholder\.\w+$/.test(name)) {
+      console.error(`ERRORE: ${relative(root, full)} è una foto in chiaro in una cartella pubblica. Spostala in private/gifts/ e lancia npm run encrypt:gifts`);
+      errors++;
+    }
+  }
+}
+scanPlain(join(root, 'public/assets/gifts'));
 
 // 2) percorsi assoluti che si romperebbero sotto un sottopercorso
 const exts = new Set(['.js', '.css', '.html', '.mjs']);
