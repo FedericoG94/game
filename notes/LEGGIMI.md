@@ -53,6 +53,7 @@ Comandi utili:
 | `npm run build` | Crea la versione di produzione nella cartella `dist/` |
 | `npm run preview` | Serve la cartella `dist/` per provarla |
 | `npm run verify` | Controllo asset + test + build, in un colpo solo |
+| `npm run encrypt:gifts` | Cifra le foto da `private/gifts/` in `public/assets/enc/` (chiede la parola d'ordine) |
 | `npm run make:placeholders` | Ricrea i ritratti segnaposto **mancanti** (non tocca i file che hai già sostituito) |
 
 Per vedere tutta l'arte disegnata dal codice (personaggio, pacchi, ostacoli…) con i nomi delle texture, apri
@@ -161,14 +162,36 @@ Ogni regalo è un blocco così:
 
 Passi:
 
-1. Metti la foto in `public/assets/gifts/positive/` (o `negative/`, `special/`). **Consigliato**: WebP quadrata ~512×512, sotto i 150 KB.
-2. Aggiungi (o modifica) il blocco in `gifts.js`.
-3. Nuove categorie (colore e simbolo del pacco): aggiungile in `categories` nello stesso file.
+1. Metti la foto **originale** in `private/gifts/positive/` (o `negative/`, `special/`). **Consigliato**: WebP quadrata ~512×512, sotto i 150 KB.
+   `private/` è ignorata da git: gli originali restano solo sul tuo computer (fanne un backup).
+2. Aggiungi (o modifica) il blocco in `gifts.js`. `image` resta nel formato `assets/gifts/positive/nome.webp`
+   e deve avere lo stesso nome del file in `private/gifts/positive/nome.webp`.
+3. Cifra le foto (vedi sotto) e committa i file `.bin` generati.
+4. Nuove categorie (colore e simbolo del pacco): aggiungile in `categories` nello stesso file.
 
 I valori vengono **controllati all'avvio**: un errore (punti col segno sbagliato, id doppio, categoria inesistente…) viene corretto
 e segnalato nella console del browser, senza bloccare il gioco. Se manca un'immagine compare un ritratto segnaposto.
 
-Dopo aver sostituito le foto, `npm run check:assets` ti avvisa di eventuali file mancanti o troppo pesanti.
+Dopo aver sostituito le foto, `npm run check:assets` ti avvisa di eventuali file mancanti, non ancora cifrati o troppo pesanti.
+
+#### Foto cifrate (importante)
+
+Le foto dei regali **non si pubblicano mai in chiaro**: nel sito ci sono solo versioni cifrate (AES-256-GCM) che il browser apre
+con la parola d'ordine di accesso, la stessa digitata all'ingresso (`src/crypto/vault.js`, `src/main.js`).
+
+```bash
+npm run encrypt:gifts     # chiede la parola d'ordine di accesso (o usa GIFT_PASSWORD)
+```
+
+- Legge gli originali da `private/gifts/...` e scrive `public/assets/enc/<hash>.bin` (nomi che non rivelano la foto).
+- Rifà **tutte** le foto a ogni lancio e rimuove i `.bin` di foto non più presenti in `private/`: tieni in `private/` tutti gli originali.
+- Se un regalo non ha un `.bin`, il gioco usa il file in chiaro `public/<image>` (solo i segnaposto `*-placeholder.webp`) o un ritratto generato.
+- Se **cambi la parola d'ordine** (hash `ACCESS_EXPECTED` in `src/crypto/vault.js`) devi rifare la cifratura di tutte le foto.
+- `npm run check:assets` dà errore se in `public/assets/gifts/` c'è una foto vera in chiaro (solo i `*-placeholder.*` sono ammessi).
+
+Flusso completo per cambiare o aggiungere una foto: originale in `private/gifts/…` → `image` in `gifts.js` →
+`npm run encrypt:gifts` → committa `public/assets/enc/` → push su `main` (la pubblicazione parte da sola).
+Per i regali senza foto vera, `private/gifts/…` contiene una copia del segnaposto con lo stesso nome, da sostituire.
 
 ### 4. Sostituire il personaggio (o qualsiasi altra grafica)
 
@@ -212,7 +235,11 @@ carlotta-gift-run/
 ├── .github/workflows/deploy.yml   test, build e pubblicazione automatica su Pages
 ├── public/                    file copiati così come sono nel sito
 │   ├── favicon.svg
-│   └── assets/gifts/{positive,negative,special}/   ritratti dei regali (WebP segnaposto)
+│   └── assets/
+│       ├── gifts/{positive,negative,special}/   solo i segnaposto in chiaro (*-placeholder.webp)
+│       └── enc/                                 foto dei regali CIFRATE (.bin, da committare)
+├── private/                   originali delle foto (ignorata da git, mai pubblicata)
+│   └── gifts/{positive,negative,special}/
 ├── src/
 │   ├── main.js                avvio: interfaccia HTML + gioco Phaser
 │   ├── data/
@@ -236,11 +263,13 @@ carlotta-gift-run/
 │   │   ├── Fx.js              particelle ed effetti
 │   │   ├── audio.js           musica ed effetti sintetizzati
 │   │   └── InputController.js tastiera/swipe/pulsanti → azioni
+│   ├── crypto/vault.js        cifratura/decifratura delle foto con la parola d'ordine
 │   ├── art/                   arte disegnata dal codice (SVG → texture)
 │   ├── ui/                    HUD, schermate, controlli touch (HTML sopra il canvas)
 │   └── styles/main.css       palette e stile dell'interfaccia
 ├── scripts/
 │   ├── make-placeholders.mjs  genera i ritratti segnaposto
+│   ├── encrypt-gifts.mjs      cifra private/gifts → public/assets/enc (npm run encrypt:gifts)
 │   └── check-assets.mjs       controlli statici su asset e percorsi
 ├── tests/                     test automatici (Vitest)
 └── dev/gallery.html           galleria dell'arte (solo sviluppo, non pubblicata)
