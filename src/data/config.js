@@ -52,7 +52,7 @@ export const config = {
     scoreLabel: 'Punteggio finale',
     bestLabel: 'Record',
     playAgainLabel: 'GIOCA ANCORA',
-    reviewLabel: 'RIVEDI LE SORPRESE',
+    reviewLabel: 'TUTTE LE SORPRESE',
     menuLabel: 'Torna al menu',
   },
 

@@ -1300,3 +1300,16 @@ body {
     animation: none;
   }
 }
+
+/* sezioni del registro: prese / non prese */
+.registry__section {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--pink-dark);
+}
+.rcard--missed {
+  opacity: 0.92;
+}

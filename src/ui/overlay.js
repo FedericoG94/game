@@ -306,7 +306,10 @@ export function createOverlay(root, app) {
   const showRegistry = ({ registry, onClose }) => {
     const grid = h('div', { class: 'registry__grid' });
     const total = registry.reduce((n, r) => n + r.count, 0);
-    for (const { gift, count } of registry) {
+    const takenIds = new Set(registry.map((r) => r.gift.id));
+    const missed = app.gifts.filter((g) => !takenIds.has(g.id));
+
+    const card = ({ gift, count }, taken) => {
       const cat = app.categories[gift.category]?.label ?? '';
       const positive = gift.type === 'positive';
       const img = h('img', { src: giftSrc(gift), alt: '', loading: 'lazy', decoding: 'async', width: 256, height: 256 });
@@ -314,22 +317,27 @@ export function createOverlay(root, app) {
         const c = app.categories[gift.category] ?? {};
         img.src = placeholderPortraitDataUri({ name: gift.name, color: c.color, symbol: c.symbol, type: gift.type, size: 256 });
       }, { once: true });
-      grid.append(
+      return h(
+        'article',
+        { class: `rcard ${positive ? 'rcard--positive' : 'rcard--negative'}${gift.rarity === 'rare' ? ' rcard--rare' : ''}${taken ? '' : ' rcard--missed'}` },
+        h('div', { class: 'rcard__photo' }, img, count > 1 ? h('span', { class: 'rcard__count', 'aria-label': `Raccolto ${count} volte` }, `×${count}`) : null),
         h(
-          'article',
-          { class: `rcard ${positive ? 'rcard--positive' : 'rcard--negative'}${gift.rarity === 'rare' ? ' rcard--rare' : ''}` },
-          h('div', { class: 'rcard__photo' }, img, count > 1 ? h('span', { class: 'rcard__count', 'aria-label': `Raccolto ${count} volte` }, `×${count}`) : null),
-          h(
-            'div',
-            { class: 'rcard__body' },
-            h('h3', {}, gift.name),
-            h('p', { class: 'rcard__meta' }, h('span', { class: 'pill' }, cat), h('span', { class: `pill pill--${positive ? 'pos' : 'neg'}` }, positive ? 'Bella sorpresa' : 'Sorpresa discutibile')),
-            h('p', { class: 'rcard__msg' }, gift.message),
-          ),
+          'div',
+          { class: 'rcard__body' },
+          h('h3', {}, gift.name),
+          h('p', { class: 'rcard__meta' }, h('span', { class: 'pill' }, cat), h('span', { class: `pill pill--${positive ? 'pos' : 'neg'}` }, positive ? 'Bella sorpresa' : 'Sorpresa discutibile')),
+          h('p', { class: 'rcard__msg' }, gift.message),
         ),
       );
+    };
+
+    grid.append(h('h3', { class: 'registry__section' }, `Sorprese prese (${registry.length})`));
+    for (const r of registry) grid.append(card(r, true));
+    if (registry.length === 0) grid.append(h('p', { class: 'registry__empty' }, 'Questa volta non hai aperto nessun pacco: ecco cosa ti sei persa!'));
+    if (missed.length > 0) {
+      grid.append(h('h3', { class: 'registry__section' }, `Sorprese non prese (${missed.length})`));
+      for (const gift of missed) grid.append(card({ gift, count: 0 }, false));
     }
-    if (registry.length === 0) grid.append(h('p', { class: 'registry__empty' }, 'Questa volta non hai aperto nessun pacco. Vuoi riprovare?'));
     const closeBtn = button('Chiudi', { cls: 'btn btn--primary', iconName: 'close', onClick: () => onClose() });
     const el = h(
       'section',
@@ -337,7 +345,7 @@ export function createOverlay(root, app) {
       h(
         'div',
         { class: 'registry__panel' },
-        h('header', { class: 'registry__head' }, h('div', {}, h('h2', { id: 'registry-title' }, 'Le tue sorprese'), h('p', {}, `${registry.length} diverse · ${total} pacchi aperti`)), closeBtn),
+        h('header', { class: 'registry__head' }, h('div', {}, h('h2', { id: 'registry-title' }, 'Tutte le sorprese'), h('p', {}, `${registry.length} prese · ${missed.length} non prese · ${total} pacchi aperti`)), closeBtn),
         grid,
       ),
     );
