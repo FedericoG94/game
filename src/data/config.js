@@ -61,7 +61,7 @@ export const config = {
   // ------------------------------------------------------------------
   run: {
     /** Durata teorica della corsa senza rallentamenti (tutto il gioco, finale incluso, resta sotto i 30 s) (la lunghezza del percorso ne deriva). */
-    targetDurationSec: 18,
+    targetDurationSec: 20,
     startSpeed: 9,
     maxSpeed: 16.5,
     /** Frazione del percorso a cui la velocità raggiunge il massimo. */
@@ -102,13 +102,13 @@ export const config = {
   spawn: {
     /** Distanza (m) a cui gli oggetti compaiono all'orizzonte. */
     spawnDistance: 62,
-    firstRowAt: 18,
+    firstRowAt: 12,
     /** Metri completamente liberi prima del traguardo. */
-    clearBeforeGate: 16,
+    clearBeforeGate: 12,
     /** Secondi di corsa tra due file di oggetti: da inizio a fine percorso. */
-    rowIntervalSec: { start: 1.6, end: 0.98 },
+    rowIntervalSec: { start: 0.95, end: 0.8 },
     /** Mai meno di questo tra due file (garantisce che ogni schema sia superabile). */
-    minRowGapSec: 0.95,
+    minRowGapSec: 0.8,
     /** Pesi degli schemi in base all'avanzamento (si usa l'ultima fase con from <= avanzamento). */
     stages: [
       { from: 0.0, weights: { gifts: 6, mixed: 2, empty: 1 } },
@@ -126,6 +126,8 @@ export const config = {
     positiveChance: 0.75,
     /** Probabilità di un regalo raro (positivo): cresce con l'avanzamento. */
     rareChance: { start: 0.04, end: 0.12 },
+    /** Ogni sorpresa del catalogo compare almeno una volta lungo il percorso (si possono prendere tutte). */
+    guaranteeAll: true,
     /** Massimo di sorprese negative consecutive generate. */
     maxNegativeStreak: 2,
     /** Quanti regali recenti evitare di ripetere subito. */

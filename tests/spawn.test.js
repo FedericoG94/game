@@ -31,6 +31,51 @@ function generateTrack(seed, spawnOverride = {}) {
   };
 }
 
+describe('SpawnManager: tutte le sorprese', () => {
+  it('ogni regalo del catalogo compare almeno una volta, ciascuno in una fila diversa', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const { entities } = generateTrack(seed);
+      const gifts = entities.filter((e) => e.kind === 'gift');
+      expect(new Set(gifts.map((e) => e.gift.id)).size).toBe(giftCatalog.length);
+      // si può raccogliere un solo pacco per fila: servono almeno tanti pacchi in file diverse quanti i regali
+      const rowsWithGift = new Set(gifts.map((e) => e.row));
+      expect(rowsWithGift.size).toBeGreaterThanOrEqual(giftCatalog.length);
+    }
+  });
+});
+
+describe('SpawnManager: percorso completabile', () => {
+  it('esiste un tragitto che raccoglie tutte le sorprese (un pacco per fila, tempo di cambio corsia incluso)', () => {
+    for (let seed = 1; seed <= 400; seed++) {
+      const { rows, state } = generateTrack(seed);
+      const ids = giftCatalog.map((g) => g.id);
+      const full = (1 << ids.length) - 1;
+      const memo = new Map();
+      const solve = (i, lane, mask) => {
+        if (mask === full) return true;
+        if (i >= rows.length) return false;
+        const key = `${i}|${lane}|${mask}`;
+        if (memo.has(key)) return memo.get(key);
+        const gap = i === 0 ? Infinity : (rows[i].pos - rows[i - 1].pos) / state.baseSpeed(rows[i - 1].pos / state.trackLength);
+        let ok = solve(i + 1, null, mask) && false;
+        for (const e of rows[i].list) {
+          if (e.kind !== 'gift') continue;
+          if (lane !== null && Math.abs(e.lane - lane) * 0.2 > gap - 0.45) continue;
+          if (solve(i + 1, e.lane, mask | (1 << ids.indexOf(e.gift.id)))) {
+            ok = true;
+            break;
+          }
+        }
+        // saltare una fila lascia più tempo per raggiungere la successiva
+        if (!ok && solve(i + 1, null, mask)) ok = true;
+        memo.set(key, ok);
+        return ok;
+      };
+      expect(solve(0, null, 0), `seed ${seed}`).toBe(true);
+    }
+  }, 60000);
+});
+
 describe('SpawnManager', () => {
   it('genera file ordinate lungo tutto il percorso e lascia libero il tratto finale', () => {
     const { rows, state } = generateTrack(1);

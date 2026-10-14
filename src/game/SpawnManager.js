@@ -52,6 +52,10 @@ export class SpawnManager {
     this.nextRowPos = this.cfg.firstRowAt;
     this.nextId = 1;
     this.prevRow = null;
+    /** Corsia dell'ultimo regalo obbligatorio (per garantire che il successivo sia raggiungibile). */
+    this.prevGiftLane = null;
+    /** Secondi tra la fila precedente e quella in costruzione (infinito per la prima). */
+    this.gapBeforeSec = Infinity;
     this.rowCount = 0;
     /** Piano delle file generate (anche quelle vuote): utile per test e diagnostica. */
     this.plan = [];
@@ -66,14 +70,30 @@ export class SpawnManager {
       const speed = this.baseSpeed(progress);
       const interval = lerp(this.cfg.rowIntervalSec.start, this.cfg.rowIntervalSec.end, smoothstep(progress));
       const spacing = Math.max(interval, this.cfg.minRowGapSec) * speed;
+      this.rowsLeft = this._countRowsLeft(lastPos);
       const row = this._planRow(progress, spacing / speed);
       this.prevRow = row;
+      this.gapBeforeSec = spacing / speed;
       this.plan.push({ pos: row.pos, type: row.type, span: row.span, freeLanes: row.freeLanes });
       this.rowCount += 1;
       for (const cell of row.cells) out.push(this._entityFor(cell, row));
       this.nextRowPos += spacing;
     }
     return out;
+  }
+
+  /** File ancora da generare (inclusa quella corrente), simulando la stessa spaziatura. */
+  _countRowsLeft(lastPos) {
+    let pos = this.nextRowPos;
+    let n = 0;
+    while (pos <= lastPos) {
+      const progress = pos / this.trackLength;
+      const speed = this.baseSpeed(progress);
+      const interval = lerp(this.cfg.rowIntervalSec.start, this.cfg.rowIntervalSec.end, smoothstep(progress));
+      pos += Math.max(interval, this.cfg.minRowGapSec) * speed;
+      n += 1;
+    }
+    return n;
   }
 
   _stageWeights(progress) {
@@ -88,15 +108,36 @@ export class SpawnManager {
     for (let attempt = 0; attempt < 12; attempt++) {
       const type = weightedPick(this.rng, weights);
       const candidate = this._structure(type);
+      // Se restano regali obbligatori, non si sprecano file senza pacchi oltre il margine disponibile.
+      const slack = this.rowsLeft - this.picker.pending;
+      // Con una sola corsia libera non si obbliga a prendere una sorpresa negativa: la fila non serve la coda.
+      const canServe = this.picker.canServe(candidate.freeLanes.length === 1, slack <= 0);
+      const hasGift = canServe && candidate.cells.some((c) => c.kind === 'gift');
+      if (this.picker.pending > 0 && !hasGift && slack <= 0) continue;
+      if (this.picker.pending > 0 && hasGift && !this._reachableCell(candidate)) continue;
       if (isRowFair(this.prevRow, candidate, gapSec)) {
         row = candidate;
         break;
       }
     }
-    row ??= this._structure('gifts');
+    if (!row) {
+      // Ripiego sempre valido: pacchi in tutte e tre le corsie, quindi uno è sicuramente raggiungibile.
+      row = this._structure('gifts');
+      if (!this._reachableCell(row)) {
+        row.cells = LANES.map((lane) => ({ kind: 'gift', lane }));
+      }
+    }
     this._assignGifts(row, progress);
     row.pos = this.nextRowPos;
     return row;
+  }
+
+  /** Primo pacco della fila raggiungibile dall'ultimo regalo obbligatorio nel tempo disponibile. */
+  _reachableCell(row) {
+    const budget = this.gapBeforeSec - REACTION_SEC;
+    return row.cells.find(
+      (c) => c.kind === 'gift' && (this.prevGiftLane === null || Math.abs(c.lane - this.prevGiftLane) * LANE_CHANGE_SEC <= budget),
+    );
   }
 
   _shuffledLanes() {
@@ -152,11 +193,24 @@ export class SpawnManager {
 
   /** Sceglie i regali veri per i pacchi della fila (stato dell'estrattore aggiornato solo qui). */
   _assignGifts(row, progress) {
+    // Al massimo un regalo obbligatorio per fila: si può raccogliere un solo pacco per fila.
+    let requiredUsed = false;
+    const reachable = this.picker.pending > 0 ? this._reachableCell(row) : null;
     for (const cell of row.cells) {
       if (cell.kind !== 'gift') continue;
+      if (!requiredUsed && (cell === reachable || !reachable)) {
+        const required = this.picker.pickRequired({ forcePositive: row.freeLanes.length === 1, urgent: this.rowsLeft - this.picker.pending <= 0 });
+        if (required) {
+          cell.gift = required;
+          requiredUsed = true;
+          this.prevGiftLane = cell.lane;
+          continue;
+        }
+      }
       // Se c'è una sola via libera non obblighiamo mai a prendere una sorpresa negativa.
       cell.gift = this.picker.pick({ progress, forcePositive: row.freeLanes.length === 1 });
     }
+    if (!requiredUsed && this.picker.pending > 0) this.prevGiftLane = null;
   }
 
   _entityFor(cell, row) {
