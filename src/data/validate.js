@@ -170,6 +170,9 @@ export function normalizeConfig(raw, defaults = raw) {
       warnings.push(`config.character.${key}: colore non valido (serve #rrggbb)`);
     }
   }
+  for (const key of ['glasses', 'earrings', 'sleeveless', 'freckles']) {
+    if (typeof cfg.character?.[key] !== 'boolean') setPath(cfg, `character.${key}`, Boolean(getPath(defaults, `character.${key}`)));
+  }
   if (!['partyHat', 'none'].includes(cfg.character?.accessory)) {
     setPath(cfg, 'character.accessory', 'none');
     warnings.push("config.character.accessory deve essere 'partyHat' oppure 'none'");

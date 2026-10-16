@@ -39,9 +39,11 @@ export function carlottaParts(c) {
   // ---------------------------------------------------------- braccio
   {
     const s = new Svg(24, 64, 'm');
-    const slOl = outlineOf(c.outfit, 0.55);
-    s.add(`<rect x="3" y="2" width="18" height="42" rx="9" fill="${s.cylinder(c.outfit)}" ${stroke(slOl, 3)}/>`);
+    // top senza maniche: braccio nudo, con i bracciali d'argento al polso
+    const slOl = c.sleeveless ? skinOl : outlineOf(c.outfit, 0.55);
+    s.add(`<rect x="3" y="2" width="18" height="42" rx="9" fill="${s.cylinder(c.sleeveless ? c.skin : c.outfit)}" ${stroke(slOl, 3)}/>`);
     s.add(`<rect x="3.5" y="35" width="17" height="9" rx="4" fill="${c.outfitAccent}" ${stroke(outlineOf(c.outfitAccent, 0.5), 2)}/>`);
+    if (c.sleeveless) s.add(`<path d="M4.5,38.5 L19.5,38.5 M4.5,41.5 L19.5,41.5" stroke="${shade(c.outfitAccent, -0.35)}" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>`);
     s.add(`<circle cx="12" cy="50" r="9.5" fill="${s.sphere(c.skin)}" ${stroke(skinOl, 3)}/>`);
     parts['c-arm'] = { w: 24, h: 64, svg: s.toString(), origin: [0.5, 8 / 64] };
   }
@@ -56,9 +58,10 @@ export function carlottaParts(c) {
     if (front) {
       s.add(`<path d="M26,5 Q38,17 50,5 Q38,0 26,5Z" fill="${c.skin}"/>`);
       s.add(`<path d="M17,7 Q38,28 59,7" fill="none" stroke="${shade(c.outfit, -0.3)}" stroke-width="6.5" stroke-linecap="round"/>`);
-      s.add(`<path d="M21,38 L55,38 Q60,38 59,44 L57,53 Q56,56 52,56 L24,56 Q20,56 19,53 L17,44 Q16,38 21,38Z" fill="${shade(c.outfit, -0.13)}" ${stroke(ol, 2.4)}/>`);
-      s.add(`<path d="M31,19 L31,33 M45,19 L45,33" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".9"/>`);
-      s.add(`<circle cx="31" cy="34.5" r="3" fill="${c.outfitAccent}"/><circle cx="45" cy="34.5" r="3" fill="${c.outfitAccent}"/>`);
+      // top a collo alto con arricciature in diagonale (neckline "halter")
+      s.add(`<path d="M20,12 Q38,34 58,14" fill="none" stroke="${shade(c.outfit, 0.22)}" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>`);
+      s.add(`<path d="M16,28 Q38,44 62,30" fill="none" stroke="${shade(c.outfit, 0.18)}" stroke-width="2.2" stroke-linecap="round" opacity=".4"/>`);
+      s.add(`<path d="M36,8 Q42,12 46,8 L44,18 Q40,22 36,18Z" fill="${shade(c.outfit, -0.25)}"/>`);
     } else {
       s.add(
         `<path d="M13,5 Q38,-3 63,5 Q74,17 60,31 Q38,40 16,31 Q2,17 13,5Z" fill="${s.toy(shade(c.outfit, 0.06), { light: 0.25, dark: 0.3 })}" ${stroke(ol, 3.2)}/>`,
@@ -80,25 +83,47 @@ export function carlottaParts(c) {
     s.add(`<circle cx="11" cy="68" r="5" fill="${shade(c.skin, -0.14)}"/><circle cx="109" cy="68" r="5" fill="${shade(c.skin, -0.14)}"/>`);
     s.add(`<circle cx="60" cy="62" r="50" fill="${s.sphere(c.skin, { cx: 0.38, cy: 0.3, light: 0.3, dark: 0.2 })}" ${stroke(skinOl, 3.5)}/>`);
     s.add(`<path d="M28,96 Q60,118 92,96" fill="none" stroke="${shade(c.skin, -0.25)}" stroke-width="5" stroke-linecap="round" opacity=".35"/>`);
+    if (c.earrings) {
+      // orecchini dorati scultorei
+      for (const x of [8, 112]) {
+        s.add(`<path d="M${x},77 C${x - 9},78 ${x - 10},90 ${x - 4},97 C${x},101 ${x + 8},96 ${x + 8},88 C${x + 8},81 ${x + 5},77 ${x},77Z" fill="#f2c230" stroke="#a87400" stroke-width="2.6" stroke-linejoin="round"/>`);
+        s.add(`<path d="M${x - 3},82 Q${x - 5},89 ${x - 2},94" fill="none" stroke="#fff3b0" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>`);
+      }
+    }
     parts['c-headFront'] = { w: 120, h: 120, svg: s.toString(), origin: [0.5, 0.52] };
   }
 
   // ---------------------------------------------------------- capelli (fronte)
   {
     const s = new Svg(120, 120, 'f');
-    const bangs =
-      'M9,62 C3,22 34,5 60,5 C86,5 117,22 111,62 C108,46 100,36 88,34 C80,46 66,50 52,42 C42,38 30,42 26,54 C20,48 13,52 9,62Z';
-    s.add(`<path d="${bangs}" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`);
-    s.add(`<path d="M24,26 Q44,10 70,12" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" opacity=".35"/>`);
-    s.add(`<g transform="translate(24 36) rotate(-18)"><path d="${starPath(8, 5, 0.5)}" fill="${c.outfitAccent}" ${stroke(outlineOf(c.outfitAccent, 0.55), 2)}/></g>`);
+    // capelli lisci con la riga in mezzo: due bande che incorniciano il viso fino al mento
+    const hair =
+      'M8,70 C0,24 32,3 60,3 C88,3 120,24 112,70 L111,104 Q106,110 99,102 L97,58 C94,38 80,26 60,26 C40,26 26,38 23,58 L21,102 Q14,110 9,104Z';
+    s.add(`<path d="${hair}" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`);
+    s.add(`<path d="M60,27 Q57,15 60,6" fill="none" stroke="${shade(c.hair, -0.5)}" stroke-width="2.6" stroke-linecap="round" opacity=".8"/>`);
+    s.add(`<path d="M24,30 Q44,10 70,12" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" opacity=".3"/>`);
+    s.add(`<path d="M14,70 Q16,88 15,98 M106,70 Q104,88 105,98" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".2"/>`);
+    if (c.glasses) {
+      // occhiali da sole scuri spinti sulla testa
+      const frame = '#23232b';
+      const lens = (cx) =>
+        `<ellipse cx="${cx}" cy="17" rx="14" ry="9.5" fill="#3a4152" stroke="${frame}" stroke-width="3.6"/>` +
+        `<path d="M${cx - 8},13 Q${cx - 2},9.5 ${cx + 5},11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".5"/>`;
+      s.add(`<path d="M18,18 Q8,24 10,36 M102,18 Q112,24 110,36" fill="none" stroke="${frame}" stroke-width="3.2" stroke-linecap="round"/>`);
+      s.add(lens(40) + lens(80));
+      s.add(`<path d="M54,15 Q60,11 66,15" fill="none" stroke="${frame}" stroke-width="3.2" stroke-linecap="round"/>`);
+    }
     parts['c-hairFront'] = { w: 120, h: 120, svg: s.toString(), origin: [0.5, 0.52] };
   }
 
   // ---------------------------------------------------------- massa di capelli dietro la testa (vista frontale)
   {
     const s = new Svg(140, 140, 'g');
-    s.add(`<ellipse cx="70" cy="74" rx="62" ry="60" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`);
-    s.add(`<path d="M18,92 Q8,116 28,128 Q22,108 32,98Z M122,92 Q132,116 112,128 Q118,108 108,98Z" fill="${c.hair}" ${stroke(hairOl, 2.5)}/>`);
+    // massa di capelli lisci che scende fino alle spalle
+    s.add(
+      `<path d="M10,72 C6,24 38,6 70,6 C102,6 134,24 130,72 L133,124 Q130,136 116,134 Q104,132 104,112 L36,112 Q36,132 24,134 Q10,136 7,124Z" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`,
+    );
+    s.add(`<path d="M22,96 Q20,116 24,128 M118,96 Q120,116 116,128" fill="none" stroke="${shade(c.hair, -0.45)}" stroke-width="2.6" stroke-linecap="round" opacity=".5"/>`);
     parts['c-hairMass'] = { w: 140, h: 140, svg: s.toString(), origin: [0.5, 0.5] };
   }
 
@@ -107,6 +132,7 @@ export function carlottaParts(c) {
     const s = new Svg(120, 120, 'k');
     const ear = s.sphere(c.skin);
     s.add(`<circle cx="9" cy="74" r="9" fill="${ear}" ${stroke(skinOl, 3)}/><circle cx="111" cy="74" r="9" fill="${ear}" ${stroke(skinOl, 3)}/>`);
+    s.add(`<path d="M12,80 Q8,114 30,117 L90,117 Q112,114 108,80Z" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`);
     s.add(`<circle cx="60" cy="62" r="50" fill="${s.sphere(c.hair, { cx: 0.4, cy: 0.28, light: 0.38, dark: 0.34 })}" ${stroke(hairOl, 3.5)}/>`);
     s.add(`<path d="M22,40 Q60,2 98,40" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".28"/>`);
     s.add(`<path d="M60,14 Q57,30 60,46" fill="none" stroke="${shade(c.hair, -0.45)}" stroke-width="3" stroke-linecap="round" opacity=".7"/>`);
@@ -117,10 +143,10 @@ export function carlottaParts(c) {
   // ---------------------------------------------------------- coda di cavallo
   {
     const s = new Svg(56, 114, 'p');
-    s.add(`<path d="M14,14 C0,48 8,90 28,110 C48,90 56,48 42,14Z" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`);
-    s.add(`<path d="M22,26 Q16,62 24,96" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".28"/>`);
-    s.add(`<path d="M34,30 Q38,60 31,92" fill="none" stroke="${shade(c.hair, -0.4)}" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>`);
-    s.add(`<ellipse cx="28" cy="13" rx="15" ry="10" fill="${s.toy(c.outfitAccent)}" ${stroke(outlineOf(c.outfitAccent, 0.55), 3)}/>`);
+    // ciocca di capelli lisci che ondeggia durante la corsa (al posto della coda di cavallo)
+    s.add(`<path d="M12,6 C4,40 8,84 24,106 Q28,110 32,106 C48,84 52,40 44,6Z" fill="${hairGrad(s)}" ${stroke(hairOl, 3.5)}/>`);
+    s.add(`<path d="M20,22 Q15,60 24,94" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".28"/>`);
+    s.add(`<path d="M35,22 Q39,58 31,92" fill="none" stroke="${shade(c.hair, -0.4)}" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>`);
     parts['c-ponytail'] = { w: 56, h: 114, svg: s.toString(), origin: [0.5, 13 / 114] };
   }
 
@@ -144,9 +170,17 @@ export function carlottaParts(c) {
     `<ellipse cx="27" cy="84" rx="9.5" ry="5.8" fill="${color}" opacity="${op}"/><ellipse cx="93" cy="84" rx="9.5" ry="5.8" fill="${color}" opacity="${op}"/>`;
   const eye = (cx, cy = 66) =>
     `<ellipse cx="${cx}" cy="${cy}" rx="8.6" ry="11.8" fill="${INK}"/><circle cx="${cx - 2.6}" cy="${cy - 5}" r="3.8" fill="#fff"/><circle cx="${cx + 3}" cy="${cy + 5}" r="1.9" fill="#fff" opacity=".9"/>`;
+  // lentiggini su guance e naso
+  const freckles = c.freckles
+    ? `<g fill="${shade(c.skin, -0.32)}" opacity=".6">` +
+      [[33, 80], [38, 85], [44, 81], [29, 86], [87, 80], [82, 85], [76, 81], [91, 86], [55, 76], [60, 74], [65, 76], [58, 80], [62, 80]]
+        .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4"/>`)
+        .join('') +
+      '</g>'
+    : '';
   const face = (inner) => {
     const s = new Svg(120, 120, 'v');
-    s.add(inner);
+    s.add(freckles + inner);
     return { w: 120, h: 120, svg: s.toString(), origin: [0.5, 0.52] };
   };
   const line = (d, w = 3.4, col = INK) => `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;

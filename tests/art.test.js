@@ -28,7 +28,8 @@ function checkWellFormed(svg) {
 }
 
 describe('arte procedurale', () => {
-  const art = buildArtCatalog({ character: settings.character, categories: categoryCatalog, gifts: giftCatalog, categoryHints: true });
+  // con il cappellino attivo, così il catalogo contiene tutte le texture possibili
+  const art = buildArtCatalog({ character: { ...settings.character, accessory: 'partyHat' }, categories: categoryCatalog, gifts: giftCatalog, categoryHints: true });
 
   it('ogni SVG è ben formato, con dimensioni valide e senza valori sporchi', () => {
     for (const [key, item] of Object.entries(art)) {
@@ -70,8 +71,9 @@ describe('arte procedurale', () => {
   });
 
   it('il cappellino manca solo se l’accessorio è disattivato', () => {
+    const hat = buildArtCatalog({ character: { ...settings.character, accessory: 'partyHat' }, categories: categoryCatalog, gifts: giftCatalog });
     const none = buildArtCatalog({ character: { ...settings.character, accessory: 'none' }, categories: categoryCatalog, gifts: giftCatalog });
-    expect(art).toHaveProperty('c-hat');
+    expect(hat).toHaveProperty('c-hat');
     expect(none).not.toHaveProperty('c-hat');
   });
 

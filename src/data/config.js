@@ -169,18 +169,29 @@ export const config = {
   },
 
   // ------------------------------------------------------------------
-  // PROTAGONISTA (generica: colori sostituibili, nessun tratto inventato)
+  // PROTAGONISTA (versione cartone di Carlotta: capelli castani lisci e lunghi, lentiggini,
+  // occhiali scuri sulla testa, orecchini dorati, top nero senza maniche, pantaloni verde oliva,
+  // bracciali d'argento ai polsi)
   // ------------------------------------------------------------------
   character: {
     name: 'Mini Carlotta',
-    skin: '#f6c7a1',
-    hair: '#6b3f2a',
-    outfit: '#ff5fa2',
-    outfitAccent: '#ffd34d',
-    pants: '#4a6fe3',
+    skin: '#f5cbae',
+    hair: '#4f3426',
+    /** top */
+    outfit: '#1f1f25',
+    /** argento: bracciali ai polsi e suole delle scarpe */
+    outfitAccent: '#c3c8d1',
+    pants: '#6f745c',
     shoes: '#ffffff',
-    /** 'partyHat' oppure 'none'. */
-    accessory: 'partyHat',
+    /** braccia nude (top senza maniche) */
+    sleeveless: true,
+    /** lentiggini sul viso */
+    freckles: true,
+    /** occhiali da sole appoggiati sulla testa e orecchini dorati */
+    glasses: true,
+    earrings: true,
+    /** 'partyHat' oppure 'none' (il cappellino copre gli occhiali). */
+    accessory: 'none',
     accessoryColor: '#a77bff',
   },
 
