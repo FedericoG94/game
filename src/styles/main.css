@@ -3,6 +3,9 @@
    Palette e misure centralizzate in :root: cambiando questi valori cambia tutta l'interfaccia.
    ===================================================================== */
 :root {
+  /* i colori del gioco non cambiano col tema scuro del dispositivo né con il "tema scuro forzato" dei browser */
+  color-scheme: only light;
+
   --ink: #2a1245;
   --ink-soft: #4a2c70;
   --paper: #fff8ee;
